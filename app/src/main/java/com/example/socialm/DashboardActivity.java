@@ -47,10 +47,10 @@ public class DashboardActivity extends AppCompatActivity {
         navigationView = findViewById(R.id.navigation);
         navigationView.setOnNavigationItemSelectedListener(selectedListener);
 
-        actionBar.setTitle("Home");
-        HomeFragment fragment1 = new HomeFragment();
+        actionBar.setTitle("Users");
+        UsersFragment fragment3 = new UsersFragment();
         FragmentTransaction ft1 = getSupportFragmentManager().beginTransaction();
-        ft1.replace(R.id.content, fragment1, "");
+        ft1.replace(R.id.content, fragment3, "");
         ft1.commit();
 
         checkUserStatus();
@@ -71,20 +71,7 @@ public class DashboardActivity extends AppCompatActivity {
                 public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
 
                     switch (menuItem.getItemId()) {
-                        case R.id.nav_home:
-                            actionBar.setTitle("Home");
-                            HomeFragment fragment1 = new HomeFragment();
-                            FragmentTransaction ft1 = getSupportFragmentManager().beginTransaction();
-                            ft1.replace(R.id.content, fragment1, "");
-                            ft1.commit();
-                            return true;
-                        case R.id.nav_profile:
-                            actionBar.setTitle("Profile");
-                            ProfileFragment fragment2 = new ProfileFragment();
-                            FragmentTransaction ft2 = getSupportFragmentManager().beginTransaction();
-                            ft2.replace(R.id.content, fragment2, "");
-                            ft2.commit();
-                            return true;
+
                         case R.id.nav_users:
                             actionBar.setTitle("Users");
                             UsersFragment fragment3 = new UsersFragment();
@@ -101,9 +88,7 @@ public class DashboardActivity extends AppCompatActivity {
                             ft4.commit();
                             return true;
 
-                        case R.id.nav_more:
-                            showMoreOptions();
-                            return true;
+
                     }
                     return false;
                 }

@@ -3,6 +3,7 @@ package com.example.socialm.adapters;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.socialm.R;
@@ -27,10 +29,42 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.util.Base64;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
 
@@ -41,6 +75,9 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
     String imageUrl;
 
     FirebaseUser fUser;
+
+    private static final String SECRET_KEY = "123456789";
+    private static final String SALTVALUE = "abcdefg";
 
     public AdapterChat(Context context, List<ModelChat> chatList, String imageUrl) {
         this.context = context;
@@ -62,11 +99,14 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull MyHolder myHolder, final int i) {
         String message = chatList.get(i).getMessage();
         String timeStamp = chatList.get(i).getTimestamp();
         String type = chatList.get(i).getType();
+
+        String decryptedMessage = decrypt(message);
 
         Calendar cal = Calendar.getInstance(Locale.ENGLISH);
         cal.setTimeInMillis(Long.parseLong(timeStamp));
@@ -75,12 +115,12 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
         if (type.equals("text")){
             myHolder.messageTv.setVisibility(View.VISIBLE);
             myHolder.messageIv.setVisibility(View.GONE);
-            myHolder.messageTv.setText(message);
+            myHolder.messageTv.setText(decryptedMessage);
         }else {
             myHolder.messageTv.setVisibility(View.GONE);
             myHolder.messageIv.setVisibility(View.VISIBLE);
 
-            Picasso.get().load(message).placeholder(R.drawable.ic_image_black).into(myHolder.messageIv);
+            Picasso.get().load(decryptedMessage).placeholder(R.drawable.ic_image_black).into(myHolder.messageIv);
         }
         myHolder.timeTv.setText(dateTime);
         try {
@@ -119,6 +159,33 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
         } else {
             myHolder.isSeenTv.setVisibility(View.GONE);
         }
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static String decrypt(String strToDecrypt)
+    {
+        try
+        {
+            /* Declare a byte array. */
+            byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            IvParameterSpec ivspec = new IvParameterSpec(iv);
+            /* Create factory for secret keys. */
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            /* PBEKeySpec class implements KeySpec interface. */
+            KeySpec spec = new PBEKeySpec(SECRET_KEY.toCharArray(), SALTVALUE.getBytes(), 65536, 256);
+            SecretKey tmp = factory.generateSecret(spec);
+            SecretKeySpec secretKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivspec);
+            /* Retruns decrypted value. */
+            return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+        }
+        catch (InvalidAlgorithmParameterException | InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException e)
+        {
+            System.out.println("Error occured during decryption: " + e.toString());
+        }
+        return null;
     }
 
     private void deleteMessage(int position) {

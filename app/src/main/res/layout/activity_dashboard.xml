@@ -22,7 +22,7 @@
         android:layout_gravity="bottom"
         app:labelVisibilityMode="labeled"
         android:background="?android:attr/windowBackground"
-        app:menu="@menu/menu_nav">
+        app:menu="@menu/menu_chat">
     </com.google.android.material.bottomnavigation.BottomNavigationView>
 
 
